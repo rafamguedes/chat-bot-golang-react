@@ -2,7 +2,7 @@
 
 Uma aplicação local de chat em português. Backend em Go usando somente a biblioteca padrão; frontend em React, TypeScript e Vite.
 
-## O que já funciona
+## Como funciona
 
 - Respostas em streaming pela Responses API da OpenAI.
 - Contexto da conversa enviado a cada mensagem e botão para interromper a geração.
