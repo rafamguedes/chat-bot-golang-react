@@ -1,4 +1,4 @@
-# vamo — chatbot with Go, React, and OpenAI
+# vamo! chatbot with Go, React, and OpenAI
 
 A local chat application in Brazilian Portuguese. The backend uses only the Go standard library; the frontend uses React, TypeScript, and Vite.
 
