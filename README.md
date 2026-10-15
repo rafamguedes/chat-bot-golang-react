@@ -8,7 +8,7 @@ A local chat application in Brazilian Portuguese. The backend uses only the Go s
 - Conversation context sent with each message, with a button to stop generation.
 - Markdown, tables, and code blocks in responses.
 - Local history with search, deletion, and Markdown export.
-- Responsive interface, prompt suggestions, and connection settings.
+- Minimal dark interface with a collapsible sidebar, responsive layout, and connection settings.
 - Handling for missing API keys, usage limits, unavailable models, failures, and incomplete responses.
 
 ## Getting started on Windows

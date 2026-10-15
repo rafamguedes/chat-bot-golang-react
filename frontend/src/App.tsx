@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent, KeyboardEvent } from 'react'
-import { ArrowDown, ArrowDownToLine, ArrowRight, ArrowUp, Check, ChevronDown, Code2, Copy, ExternalLink, Lightbulb, Menu, MessageSquare, PenLine, Plus, Search, Settings2, Sparkles, Square, Trash2, WandSparkles, X } from 'lucide-react'
+import { ArrowDown, ArrowDownToLine, ArrowRight, ArrowUp, Check, ChevronDown, Copy, ExternalLink, PanelLeft, Search, Settings2, Square, SquarePen, Trash2, X } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { getHealth, streamReply } from './api'
@@ -8,15 +8,8 @@ import type { Health } from './api'
 import { loadConversations, newConversation, STORAGE_KEY } from './storage'
 import type { Conversation, Message } from './storage'
 
-const suggestions = [
-  { icon: Lightbulb, color: 'peach', title: 'Tirar uma ideia do papel', text: 'Um primeiro passo para algo novo.', prompt: 'Tenho uma ideia e quero tirar do papel. Me ajude a organizar os primeiros passos, começando com algumas perguntas.' },
-  { icon: PenLine, color: 'lavender', title: 'Encontrar as palavras', text: 'Escreva, revise ou dê outro tom.', prompt: 'Quero escrever um texto com mais clareza e personalidade. Me pergunte sobre o objetivo, o público e o tom antes de começarmos.' },
-  { icon: Code2, color: 'mint', title: 'Descomplicar um código', text: 'Da primeira linha à solução.', prompt: 'Me ajude a entender ou resolver um problema de programação. Comece perguntando em qual linguagem estou trabalhando e qual é o problema.' },
-  { icon: WandSparkles, color: 'yellow', title: 'Aprender algo diferente', text: 'Transforme curiosidade em descoberta.', prompt: 'Quero aprender algo novo hoje. Sugira três assuntos interessantes de áreas diferentes e me ajude a escolher um para explorar.' },
-]
-
-function Mark({ small = false }: { small?: boolean }) {
-  return <span className={`brand-mark ${small ? 'small' : ''}`} aria-hidden="true"><svg viewBox="0 0 40 40"><path d="m8 12 8 17h8l8-17h-8l-4 10-4-10Z" fill="currentColor" /></svg></span>
+function Mark() {
+  return <svg className="brand-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 6 5 6-5 6m9 0h6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
 }
 
 export default function App() {
@@ -32,6 +25,7 @@ export default function App() {
   const [health, setHealth] = useState<Health | null>(null)
   const [healthLoading, setHealthLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [copiedId, setCopiedId] = useState('')
   const [notice, setNotice] = useState('')
@@ -80,7 +74,8 @@ export default function App() {
   useEffect(() => {
     const keydown = (event: globalThis.KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
-        event.preventDefault(); setSidebarOpen(true); searchInput.current?.focus()
+        event.preventDefault(); setSidebarCollapsed(false); setSidebarOpen(true)
+        requestAnimationFrame(() => searchInput.current?.focus())
       }
       if (event.key === 'Escape') setSidebarOpen(false)
     }
@@ -168,56 +163,59 @@ export default function App() {
   }
 
   const isEmpty = active.messages.length === 0
-  const statusText = healthLoading ? 'Conectando' : health?.configured ? 'Pronto para conversar' : health ? 'Configuração pendente' : 'Servidor desconectado'
+  const statusText = healthLoading ? 'Conectando…' : health?.configured ? 'Chave configurada' : health ? 'Chave não configurada' : 'Servidor desconectado'
   const filtered = [...conversations].sort((a, b) => b.updatedAt - a.updatedAt).filter(c => c.messages.length && c.title.toLocaleLowerCase().includes(search.toLocaleLowerCase()))
 
-  return <div className="app-shell">
+  function toggleSidebar() {
+    if (window.matchMedia('(max-width: 760px)').matches) setSidebarOpen(previous => !previous)
+    else setSidebarCollapsed(previous => !previous)
+  }
+
+  return <div className={`app-shell ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
     {sidebarOpen && <button className="sidebar-backdrop" aria-label="Fechar menu" onClick={() => setSidebarOpen(false)} />}
     <aside className={`sidebar ${sidebarOpen ? 'is-open' : ''}`} aria-label="Conversas">
-      <a className="brand" href="#" onClick={e => { e.preventDefault(); createChat() }}><Mark /><span>vamo<span className="brand-period">.</span></span></a>
-      <button className="new-chat" onClick={createChat} disabled={busy}><Plus size={18} /> Nova conversa <span className="new-badge">+</span></button>
-      <label className="search"><Search size={16} /><input ref={searchInput} value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar conversas" aria-label="Buscar conversas" /><kbd>⌘ K</kbd></label>
-      <div className="history-label">SEU ESPAÇO <span>{conversations.filter(c => c.messages.length).length.toString().padStart(2, '0')}</span></div>
+      <div className="sidebar-header">
+        <a className="brand" href="#" onClick={e => { e.preventDefault(); createChat() }} aria-label="Vamo, nova conversa"><Mark /><span>Vamo</span></a>
+        <button className="icon-button" aria-label="Recolher barra lateral" title="Recolher barra lateral" onClick={toggleSidebar}><PanelLeft size={17} /></button>
+      </div>
+      <nav className="sidebar-nav" aria-label="Navegação principal">
+        <button className="new-chat" onClick={createChat} disabled={busy}><SquarePen size={17} strokeWidth={1.7} /><span>Nova conversa</span></button>
+        <label className="search"><Search size={17} strokeWidth={1.7} /><input ref={searchInput} value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar conversas" aria-label="Buscar conversas" /><kbd>Ctrl K</kbd></label>
+      </nav>
+      <div className="history-label">Conversas</div>
       <div className="history">
         {filtered.length ? filtered.map(c => <div key={c.id} className={`history-item ${c.id === active.id ? 'active' : ''}`}>
-          <button className="history-select" disabled={busy} onClick={() => { setActiveId(c.id); setDraft(''); setSidebarOpen(false); stickToBottom.current = true }}><MessageSquare size={15} /><span>{c.title}</span></button>
+          <button className="history-select" aria-current={c.id === active.id ? 'page' : undefined} disabled={busy} onClick={() => { setActiveId(c.id); setDraft(''); setSidebarOpen(false); stickToBottom.current = true }}><span>{c.title}</span></button>
           <button className="delete-chat" disabled={busy} aria-label={`Excluir ${c.title}`} onClick={() => deleteChat(c.id)}><Trash2 size={14} /></button>
-        </div>) : <div className="history-empty"><span className="empty-history-icon"><MessageSquare size={19} /></span><p>{search ? 'Nenhuma conversa encontrada.' : 'Tudo começa com uma conversa.'}</p><span>{search ? 'Tente buscar outra palavra.' : 'Suas ideias vão morar por aqui.'}</span></div>}
+        </div>) : <p className="history-empty">{search ? 'Nenhum resultado.' : 'Suas conversas aparecem aqui.'}</p>}
       </div>
       <div className="sidebar-bottom">
-        <div className="little-note"><span className="note-spark">✳</span><p>Uma boa pergunta.<br /><strong>Infinitas possibilidades.</strong></p><span className="note-line" /></div>
-        <button className="settings-button" onClick={() => setSettingsOpen(true)}><Settings2 size={17} /> Configurações <ArrowRight size={15} /></button>
-        <div className="profile"><span className="avatar">V</span><div><strong>Meu espaço</strong><span>Conversas neste navegador</span></div><span className="profile-dot" /></div>
+        <button className="settings-button" onClick={() => setSettingsOpen(true)}><Settings2 size={17} strokeWidth={1.7} /><span>Configurações</span></button>
+        <div className="profile"><span className="avatar">V</span><span>Espaço pessoal</span><span className="local-badge">Local</span></div>
       </div>
     </aside>
 
     <main className="main-panel">
       <header className="topbar">
-        <div className="topbar-left"><button className="icon-button mobile-menu" aria-label="Abrir menu de conversas" onClick={() => setSidebarOpen(true)}><Menu size={21} /></button><span className="workspace-title">Seu parceiro de ideias</span><span className="topbar-separator" /><button className="model-chip" onClick={() => setSettingsOpen(true)}><span className="model-spark">✳</span> OpenAI <ChevronDown size={13} /></button></div>
-        <div className={`connection-status ${health?.configured ? 'ready' : ''}`}><span />{statusText}</div>
+        <div className="topbar-left"><button className="icon-button show-sidebar" aria-label="Mostrar barra lateral" title="Mostrar barra lateral" onClick={toggleSidebar}><PanelLeft size={18} /></button><span className="workspace-title">{isEmpty ? 'Nova conversa' : active.title}</span></div>
+        <div className="topbar-actions">{!isEmpty && <button className="icon-button" onClick={exportChat} disabled={busy} aria-label="Exportar conversa em Markdown" title="Exportar conversa"><ArrowDownToLine size={17} /></button>}<button className="icon-button" onClick={() => setSettingsOpen(true)} aria-label="Abrir configurações" title="Configurações"><Settings2 size={18} /></button></div>
       </header>
 
+      <div className={`workspace ${isEmpty ? 'is-empty' : ''}`}>
       <div ref={scroller} className={`chat-scroll ${isEmpty ? 'empty' : ''}`} onScroll={() => {
         if (!scroller.current) return
         stickToBottom.current = scroller.current.scrollHeight - scroller.current.scrollTop - scroller.current.clientHeight < 120
         setShowScroll(!stickToBottom.current)
       }}>
         {isEmpty ? <section className="welcome" aria-label="Comece uma conversa">
-          <div className="welcome-eyebrow"><span /> UM ESPAÇO PARA PENSAR JUNTO</div>
-          <div className="hero-mark"><Mark /><span className="orbit orbit-one" /><span className="orbit orbit-two" /><span className="hero-star">✦</span><span className="hero-dot" /></div>
-          <h1>Boas ideias começam<br />com um <span>“e se?”<svg viewBox="0 0 190 16" preserveAspectRatio="none"><path d="M4 10Q90-1 184 8M22 14Q99 6 167 12" /></svg></span></h1>
-          <p className="welcome-description">Um rascunho, uma dúvida, um plano para amanhã.<br />O que vamos tirar do papel hoje?</p>
-          <div className="suggestions">{suggestions.map(({ icon: Icon, color, title, text, prompt }) => <button className="suggestion" key={title} onClick={() => { setDraft(prompt); composer.current?.focus() }}><span className={`suggestion-icon ${color}`}><Icon size={19} strokeWidth={1.7} /></span><ArrowRight className="suggestion-arrow" size={17} /><strong>{title}</strong><span className="suggestion-description">{text}</span></button>)}</div>
-          <div className="welcome-footnote"><Sparkles size={13} /> Sua curiosidade é um ótimo ponto de partida.</div>
+          <h1>O que vamos criar?</h1>
         </section> : <section className="messages" aria-label="Mensagens da conversa">
-          <div className="conversation-heading"><span>CONVERSA EM ANDAMENTO</span><button onClick={exportChat} disabled={busy} title="Exportar conversa em Markdown"><ArrowDownToLine size={15} /> Exportar</button></div>
           {active.messages.map((message, index) => <article key={message.id} className={`message ${message.role}`}>
-            <div className="message-avatar">{message.role === 'assistant' ? <Mark small /> : <span>V</span>}</div>
-            <div className="message-body"><div className="message-author">{message.role === 'assistant' ? 'vamo' : 'Você'}{message.role === 'assistant' && <span>ASSISTENTE</span>}</div>
+            <div className="message-body"><div className="message-author">{message.role === 'assistant' ? 'Vamo' : 'Você'}</div>
               <div className="message-content">{message.role === 'assistant' ? message.content ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown> : !message.error && !message.interrupted && <span className="typing" aria-label="Preparando resposta"><i /><i /><i /></span> : <p>{message.content}</p>}</div>
               {message.interrupted && <div className="interrupted">Resposta interrompida.</div>}
               {message.error && <div className="message-error" role="alert"><p>{message.error}</p>{!busy && index === active.messages.length - 1 && <button onClick={() => void send(active.messages[index - 1]?.content || '', true)}>Tentar novamente <ArrowRight size={13} /></button>}</div>}
-              {message.role === 'assistant' && message.content && !busy && <button className="copy-button" onClick={() => void copyMessage(message)}>{copiedId === message.id ? <Check size={14} /> : <Copy size={14} />}{copiedId === message.id ? 'Copiado' : 'Copiar'}</button>}
+              {message.role === 'assistant' && message.content && !busy && <button className="copy-button" aria-label={copiedId === message.id ? 'Resposta copiada' : 'Copiar resposta'} title={copiedId === message.id ? 'Copiado' : 'Copiar resposta'} onClick={() => void copyMessage(message)}>{copiedId === message.id ? <Check size={14} /> : <Copy size={14} />}</button>}
             </div>
           </article>)}
         </section>}
@@ -227,17 +225,18 @@ export default function App() {
         {showScroll && !isEmpty && <button className="scroll-bottom" aria-label="Ir para a última mensagem" onClick={() => { stickToBottom.current = true; scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: 'smooth' }) }}><ArrowDown size={18} /></button>}
         {notice && <div className="notice" role="status"><span>{notice}</span><button className="icon-button" aria-label="Fechar aviso" onClick={() => setNotice('')}><X size={15} /></button></div>}
         <form className={`composer ${busy ? 'is-busy' : ''}`} onSubmit={submit}>
-          <textarea ref={composer} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={onKeyDown} maxLength={16000} placeholder="Pode perguntar. A ideia é sua, a conversa é nossa." aria-label="Sua mensagem" rows={1} disabled={busy} />
-          <div className="composer-bottom"><span className="composer-hint"><span className="hint-spark">✳</span> Um pouco de curiosidade vai longe.</span><div className="composer-actions"><span className="enter-hint">{draft.length > 14000 ? `${draft.length}/16000` : 'Enter para enviar'}</span>{busy ? <button className="send-button stop" type="button" title="Interromper resposta" aria-label="Interromper resposta" onClick={() => controller.current?.abort()}><Square size={16} fill="currentColor" /></button> : <button className="send-button" type="submit" disabled={!draft.trim()} title="Enviar mensagem" aria-label="Enviar mensagem"><ArrowUp size={20} /></button>}</div></div>
+          <textarea ref={composer} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={onKeyDown} maxLength={16000} placeholder="Pergunte ou peça alguma coisa…" aria-label="Sua mensagem" rows={1} disabled={busy} />
+          <div className="composer-bottom"><button type="button" className="model-button" onClick={() => setSettingsOpen(true)} title="Configurações do modelo">{health?.model || 'Modelo'}<ChevronDown size={13} /></button><div className="composer-actions"><span className="enter-hint">{draft.length > 14000 ? `${draft.length}/16000` : 'Local'}</span>{busy ? <button className="send-button stop" type="button" title="Interromper resposta" aria-label="Interromper resposta" onClick={() => controller.current?.abort()}><Square size={13} fill="currentColor" /></button> : <button className="send-button" type="submit" disabled={!draft.trim()} title="Enviar mensagem" aria-label="Enviar mensagem"><ArrowUp size={18} strokeWidth={2.2} /></button>}</div></div>
         </form>
-        <div className="composer-caption"><span>Feito para conversar. Aberto a possibilidades.</span><span>A IA pode cometer erros. Confira informações importantes.</span></div>
+        <div className="composer-caption">Vamo pode cometer erros. Confira as respostas.</div>
+      </div>
       </div>
     </main>
 
     <dialog ref={settingsDialog} className="settings-dialog" onCancel={() => setSettingsOpen(false)} onClick={event => { if (event.target === event.currentTarget) setSettingsOpen(false) }}>
-      <div className="dialog-heading"><div><span className="dialog-eyebrow">DO SEU JEITO</span><h2>Seu espaço, configurado.</h2></div><button className="icon-button" aria-label="Fechar configurações" onClick={() => setSettingsOpen(false)}><X size={21} /></button></div>
+      <div className="dialog-heading"><h2>Configurações</h2><button className="icon-button" aria-label="Fechar configurações" onClick={() => setSettingsOpen(false)}><X size={19} /></button></div>
       <div className="settings-status"><span className={`status-light ${health?.configured ? 'ready' : ''}`} /><div><strong>{statusText}</strong><p>{health?.configured ? 'O backend está pronto para enviar mensagens à OpenAI.' : health ? 'Configure sua chave no backend para começar.' : 'Inicie o servidor Go na porta 8080.'}</p></div></div>
-      <label className="setting-label">MODELO NO BACKEND<code>{health?.model || 'Definido em OPENAI_MODEL'}</code></label>
+      <label className="setting-label">Modelo<code>{health?.model || 'Definido em OPENAI_MODEL'}</code></label>
       <div className="setup-instructions"><strong>Como conectar</strong><ol><li>Copie <code>backend/.env.example</code> para <code>backend/.env</code>.</li><li>Preencha <code>OPENAI_API_KEY</code> com sua chave.</li><li>Reinicie o backend com <code>go run .</code>.</li></ol><p>A chave fica somente no servidor. O modelo pode ser alterado em <code>OPENAI_MODEL</code>.</p><a href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer">Gerenciar chave na OpenAI <ExternalLink size={13} /></a></div>
       <p className="privacy-note">O histórico fica neste navegador (até 30 conversas). Ao enviar, o conteúdo da conversa é encaminhado à OpenAI. Você pode excluir ou exportar suas conversas.</p>
       <button className="refresh-button" onClick={() => void refreshHealth()} disabled={checking}>{checking ? 'Verificando…' : 'Verificar conexão'}<ArrowRight size={16} /></button>
