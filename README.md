@@ -2,6 +2,8 @@
 
 A local chat application in Brazilian Portuguese. The backend uses only the Go standard library; the frontend uses React, TypeScript, and Vite.
 
+![Vamo main screen in dark mode](docs/images/main-screen.png)
+
 ## Features
 
 - Streaming responses through the OpenAI Responses API.
