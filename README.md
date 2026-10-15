@@ -1,144 +1,144 @@
-# vamo — chatbot com Go, React e OpenAI
+# vamo — chatbot with Go, React, and OpenAI
 
-Uma aplicação local de chat em português. Backend em Go usando somente a biblioteca padrão; frontend em React, TypeScript e Vite.
+A local chat application in Brazilian Portuguese. The backend uses only the Go standard library; the frontend uses React, TypeScript, and Vite.
 
-## Como funciona
+## Features
 
-- Respostas em streaming pela Responses API da OpenAI.
-- Contexto da conversa enviado a cada mensagem e botão para interromper a geração.
-- Markdown, tabelas e blocos de código nas respostas.
-- Histórico local com busca, exclusão e exportação em Markdown.
-- Interface responsiva, sugestões de perguntas e configurações de conexão.
-- Tratamento de chave ausente, limite de uso, modelo indisponível, falhas e respostas incompletas.
+- Streaming responses through the OpenAI Responses API.
+- Conversation context sent with each message, with a button to stop generation.
+- Markdown, tables, and code blocks in responses.
+- Local history with search, deletion, and Markdown export.
+- Responsive interface, prompt suggestions, and connection settings.
+- Handling for missing API keys, usage limits, unavailable models, failures, and incomplete responses.
 
-## Começar no Windows
+## Getting started on Windows
 
-O pacote ZIP da entrega inclui a interface compilada e `backend/vamo-chat.exe` para Windows x64. Para executar essa versão, não é necessário instalar Go ou Node. Esses arquivos compilados não são versionados no Git; ao clonar o repositório, siga a seção de desenvolvimento ou compile a aplicação antes de executar `iniciar.cmd`.
+The delivered ZIP package includes the built frontend and `backend/vamo-chat.exe` for Windows x64. You do not need Go or Node to run that version. These build artifacts are not tracked in Git; after cloning the repository, follow the development instructions or build the application before running `iniciar.cmd`.
 
-1. Copie `backend/.env.example` para `backend/.env`.
-2. Preencha `OPENAI_API_KEY` nesse arquivo com uma chave da sua conta: [gerenciar chaves](https://platform.openai.com/api-keys).
-3. Execute `iniciar.cmd` e mantenha o terminal aberto.
-4. Acesse <http://127.0.0.1:8080>.
+1. Copy `backend/.env.example` to `backend/.env`.
+2. Set `OPENAI_API_KEY` in that file using a key from your account: [manage API keys](https://platform.openai.com/api-keys).
+3. Run `iniciar.cmd` and keep the terminal open.
+4. Open <http://127.0.0.1:8080>.
 
-O modelo inicial é `gpt-5.4-mini`. Você pode trocar `OPENAI_MODEL` por um modelo compatível com Responses e disponível na sua conta. A API exige uma chave e saldo próprios. Sem chave, a interface abre e explica a configuração; nenhuma resposta é simulada.
+The default model is `gpt-5.4-mini`. You can set `OPENAI_MODEL` to a Responses-compatible model available to your account. The API requires your own API key and balance. Without a key, the interface opens and explains how to configure it; no responses are simulated.
 
-## Desenvolver a partir do código
+## Developing from source
 
-Requisitos: Go 1.23 ou superior; Node 22.12 ou superior (ou 20.19+), com npm. Use uma versão do Go ainda suportada para novas instalações.
+Requirements: Go 1.23 or later; Node 22.12 or later (or 20.19+), with npm. Use a currently supported Go version for new installations.
 
-No primeiro terminal, na pasta `backend`:
+In the first terminal, from the `backend` directory:
 
 ```powershell
 Copy-Item .env.example .env
-# Edite .env e adicione a chave. Não a coloque no frontend.
+# Edit .env and add your API key. Do not put it in the frontend.
 go run .
 ```
 
-No segundo terminal, na pasta `frontend`:
+In the second terminal, from the `frontend` directory:
 
 ```powershell
 npm ci
 npm run dev
 ```
 
-Abra <http://127.0.0.1:5173>. O Vite encaminha `/api` ao Go na porta 8080. Se alterar a porta do backend, ajuste também `frontend/vite.config.ts`.
+Open <http://127.0.0.1:5173>. Vite forwards `/api` requests to Go on port 8080. If you change the backend port, also update `frontend/vite.config.ts`.
 
-## Compilar uma nova versão
+## Building a new version
 
-Na pasta `frontend`:
+From the `frontend` directory:
 
 ```powershell
 npm ci
 npm run build
 ```
 
-Na pasta `backend`:
+From the `backend` directory:
 
 ```powershell
 go build -trimpath -o vamo-chat.exe .
 ```
 
-O Go serve os arquivos de `frontend/dist` e a API no mesmo endereço. A execução deve começar na pasta `backend`, como faz `iniciar.cmd`. Em Linux/macOS, compile com `go build -o vamo-chat .` e execute `./vamo-chat` nessa pasta.
+Go serves the files in `frontend/dist` and the API at the same address. Start the application from the `backend` directory, as `iniciar.cmd` does. On Linux/macOS, build with `go build -o vamo-chat .` and run `./vamo-chat` from that directory.
 
-## Configuração do backend
+## Backend configuration
 
-| Variável | Padrão | Uso |
+| Variable | Default | Purpose |
 | --- | --- | --- |
-| `OPENAI_API_KEY` | vazio | Chave da OpenAI, somente no servidor |
-| `OPENAI_MODEL` | `gpt-5.4-mini` | Modelo para a geração |
-| `HOST` | `127.0.0.1` | Interface de rede local |
-| `PORT` | `8080` | Porta HTTP |
-| `ALLOWED_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | Origens adicionais autorizadas, separadas por vírgula |
-| `FRONTEND_DIST` | `../frontend/dist` | Caminho dos arquivos compilados |
+| `OPENAI_API_KEY` | empty | OpenAI API key, kept on the server only |
+| `OPENAI_MODEL` | `gpt-5.4-mini` | Model used for generation |
+| `HOST` | `127.0.0.1` | Local network interface |
+| `PORT` | `8080` | HTTP port |
+| `ALLOWED_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | Additional allowed origins, separated by commas |
+| `FRONTEND_DIST` | `../frontend/dist` | Path to the built frontend files |
 
-O arquivo `.env` é lido ao iniciar. Variáveis já existentes no ambiente têm prioridade. Reinicie o servidor após alterar a chave ou o modelo.
+The `.env` file is read at startup. Existing environment variables take precedence. Restart the server after changing the API key or model.
 
 ## API
 
-`GET /api/health` informa se o servidor está ativo, o modelo e se há uma chave configurada. Não faz uma chamada paga nem confirma a validade da chave.
+`GET /api/health` reports whether the server is running, the configured model, and whether an API key has been set. It does not make a paid request or confirm that the key is valid.
 
-`POST /api/chat`, com `Content-Type: application/json`:
+`POST /api/chat`, with `Content-Type: application/json`:
 
 ```json
 {
   "messages": [
-    { "role": "user", "content": "Me ajude a organizar uma ideia." }
+    { "role": "user", "content": "Help me organize an idea." }
   ]
 }
 ```
 
-Em caso de sucesso, retorna SSE:
+A successful request returns SSE:
 
 ```text
-data: {"type":"delta","delta":"Vamos começar!"}
+data: {"type":"delta","delta":"Let's get started!"}
 
 data: {"type":"done"}
 
 ```
 
-Erros anteriores ao streaming retornam HTTP 4xx/5xx com `{"error":"mensagem"}`. Erros durante a geração retornam um evento `{"type":"error","error":"mensagem"}`. Uma resposta só é considerada concluída após `done`. O cancelamento no navegador também cancela a requisição à OpenAI.
+Errors before streaming return HTTP 4xx/5xx with `{"error":"message"}`. Errors during generation return a `{"type":"error","error":"message"}` event. A response is considered complete only after `done`. Canceling in the browser also cancels the request to OpenAI.
 
-Limites: até 100 mensagens por requisição; 16.000 caracteres por mensagem; 120.000 bytes de conteúdo por conversa; corpo HTTP de 256 KiB; até 4.096 tokens de saída. Ao atingir um limite, inicie uma conversa nova. O frontend não descarta silenciosamente o começo da conversa para caber no contexto.
+Limits: up to 100 messages per request; 16,000 characters per message; 120,000 bytes of conversation content; a 256 KiB HTTP request body; and up to 4,096 output tokens. Start a new conversation when you reach a limit. The frontend does not silently discard the beginning of a conversation to fit the context.
 
-## Dados e escopo
+## Data and scope
 
-O histórico fica no `localStorage` deste navegador, limitado a 30 conversas. Não há sincronização ou banco de dados. Quando uma nova conversa ultrapassa esse limite, a mais antiga da lista é removida; exporte o que quiser guardar. Excluir uma conversa remove o histórico local.
+History is stored in this browser's `localStorage`, with a limit of 30 conversations. There is no synchronization or database. When a new conversation exceeds that limit, the oldest conversation in the list is removed; export anything you want to keep. Deleting a conversation removes its local history.
 
-As mensagens e o contexto são enviados à OpenAI quando você envia uma pergunta. A integração usa `store: false`; isso não substitui as políticas de retenção da API. A chave fica no backend e os arquivos `.env` são ignorados pelo Git. Não distribua sua chave nem a adicione a variáveis `VITE_*`.
+Messages and conversation context are sent to OpenAI when you submit a question. The integration uses `store: false`; this does not replace the API's data retention policies. The API key stays in the backend, and `.env` files are ignored by Git. Do not share your key or add it to `VITE_*` variables.
 
-Esta base é para uso local, sem autenticação. Para publicar na internet, adicione autenticação, limites por usuário e HTTPS antes de expor o servidor. O backend Go precisa de uma hospedagem que execute Go ou contêineres.
+This starter application is intended for local use and has no authentication. Before exposing the server to the internet, add authentication, per-user limits, and HTTPS. The Go backend requires hosting that supports Go applications or containers.
 
-## Verificação
+## Verification
 
 ```powershell
-# Em backend
+# From backend
 go test -v ./...
 go vet ./...
 
-# Em frontend
+# From frontend
 npm test
 npm run build
 ```
 
-Os testes do backend usam um servidor OpenAI simulado para verificar o contrato HTTP, contexto, streaming, erros, cancelamento e proteção da chave. Os testes do frontend verificam o parser de SSE, incluindo texto UTF-8 dividido entre pacotes. Não é preciso uma chave para executar os testes.
+The backend tests use a mock OpenAI server to verify the HTTP contract, conversation context, streaming, errors, cancellation, and API key protection. The frontend tests verify the SSE parser, including UTF-8 text split across network chunks. You do not need an API key to run the tests.
 
-## Estrutura
+## Project structure
 
 ```text
 backend/
-  main.go             # Servidor HTTP, cliente OpenAI, configuração e streaming
-  main_test.go        # Testes de integração locais
-  .env.example        # Configuração sem segredos
-  vamo-chat.exe       # Executável compilado para Windows x64
+  main.go             # HTTP server, OpenAI client, configuration, and streaming
+  main_test.go        # Local integration tests
+  .env.example        # Configuration without secrets
+  vamo-chat.exe       # Compiled executable for Windows x64
 frontend/
-  src/App.tsx         # Interface e fluxo de conversas
-  src/api.ts          # Cliente da API local
-  src/lib/sse.mjs     # Parser incremental de eventos
-  src/storage.ts      # Histórico no navegador
-  src/styles.css      # Layout responsivo
-  tests/              # Testes do parser
-  dist/               # Interface compilada
-iniciar.cmd           # Inicia a versão compilada no Windows
+  src/App.tsx         # Interface and conversation flow
+  src/api.ts          # Local API client
+  src/lib/sse.mjs     # Incremental event parser
+  src/storage.ts      # Browser history
+  src/styles.css      # Responsive layout
+  tests/              # Parser tests
+  dist/               # Built frontend
+iniciar.cmd           # Starts the built Windows version
 ```
 
-Referências: [Responses e streaming](https://developers.openai.com/api/docs/guides/streaming-responses), [modelo configurado](https://developers.openai.com/api/docs/models/gpt-5.4-mini), [React](https://react.dev/reference/react-dom/client/createRoot) e [Vite](https://vite.dev/guide/).
+References: [Responses and streaming](https://developers.openai.com/api/docs/guides/streaming-responses), [configured model](https://developers.openai.com/api/docs/models/gpt-5.4-mini), [React](https://react.dev/reference/react-dom/client/createRoot), and [Vite](https://vite.dev/guide/).
